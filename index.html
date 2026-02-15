@@ -4,21 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
-<title>Flappy Friend</title>
+<title>Royal Muthu</title>
 
 <style>
 body{
 margin:0;
 overflow:hidden;
-touch-action:none;
 background:skyblue;
-font-family:Arial;
+touch-action:none;
 }
 
 canvas{
 position:fixed;
 top:0;
 left:0;
+touch-action:none;
 }
 
 #start,#over{
@@ -47,7 +47,7 @@ cursor:pointer;
 
 <body>
 
-<div id="start">Tap / Press SPACE to Start</div>
+<div id="start">Tap / Press Space To Start</div>
 
 <div id="over" style="display:none">
 Game Over
@@ -61,6 +61,7 @@ Game Over
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+// ===== RESIZE =====
 function resize(){
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -68,7 +69,7 @@ canvas.height = window.innerHeight;
 resize();
 window.addEventListener("resize",resize);
 
-// ===== IMAGES =====
+// ===== IMAGE =====
 let face = new Image();
 face.src = "friend.png";
 
@@ -76,18 +77,18 @@ face.src = "friend.png";
 let bgm = new Audio("bgm.mp3");
 bgm.loop = true;
 
-// ===== GAME VARIABLES =====
+// ===== GAME VALUES =====
 let started=false;
 let gravity=0.45;
 let velocity=0;
 let score=0;
-let speed=2.5;
+let speed=2.4;
 
 // ===== BIRD =====
 let bird={
-x:canvas.width*0.2,
+x:canvas.width*0.25,
 y:canvas.height*0.4,
-size:canvas.width*0.16,
+size:canvas.width*0.14
 };
 
 // ===== CLOUDS =====
@@ -103,16 +104,18 @@ speed:0.3+Math.random()*0.3
 
 // ===== PIPES =====
 let pipes=[];
-let gap = canvas.height*0.30;
-let pipeWidth = canvas.width*0.12;
 
-// spawn using distance control (NO OVERLAP)
-let pipeDistance = canvas.width*0.6;
+// ⭐ GAP FIXED (larger than head)
+let gap = bird.size * 3.2;
+
+let pipeWidth = canvas.width*0.11;
+let pipeDistance = canvas.width*0.65;
 
 function spawnPipe(){
-let lastPipe = pipes[pipes.length-1];
 
-if(!lastPipe || lastPipe.x < canvas.width - pipeDistance){
+let last = pipes[pipes.length-1];
+
+if(!last || last.x < canvas.width - pipeDistance){
 
 let top = Math.random()*(canvas.height*0.45)+60;
 
@@ -127,9 +130,11 @@ passed:false
 
 // ===== DRAW CLOUDS =====
 function drawClouds(){
+
 ctx.fillStyle="white";
 
 clouds.forEach(c=>{
+
 ctx.beginPath();
 ctx.arc(c.x,c.y,c.size*0.5,0,Math.PI*2);
 ctx.arc(c.x+40,c.y+10,c.size*0.4,0,Math.PI*2);
@@ -138,16 +143,19 @@ ctx.fill();
 
 c.x -= c.speed;
 if(c.x<-100) c.x = canvas.width+100;
+
 });
 }
 
 // ===== DRAW BIRD =====
 function drawBird(){
-ctx.drawImage(face,
+ctx.drawImage(
+face,
 bird.x-bird.size/2,
 bird.y-bird.size/2,
 bird.size,
-bird.size);
+bird.size
+);
 }
 
 // ===== DRAW PIPES =====
@@ -155,27 +163,27 @@ function drawPipes(){
 
 pipes.forEach(p=>{
 
-let grad = ctx.createLinearGradient(p.x,0,p.x+pipeWidth,0);
-grad.addColorStop(0,"#2ecc71");
-grad.addColorStop(1,"#27ae60");
+let g = ctx.createLinearGradient(p.x,0,p.x+pipeWidth,0);
+g.addColorStop(0,"#2ecc71");
+g.addColorStop(1,"#27ae60");
 
-ctx.fillStyle=grad;
+ctx.fillStyle=g;
 
-// Top
+// top
 ctx.fillRect(p.x,0,pipeWidth,p.top);
 ctx.fillRect(p.x-5,p.top-25,pipeWidth+10,25);
 
-// Bottom
+// bottom
 ctx.fillRect(p.x,p.bottom,pipeWidth,canvas.height);
 ctx.fillRect(p.x-5,p.bottom,pipeWidth+10,25);
 
 });
 }
 
-// ===== COLLISION =====
+// ===== COLLISION (fair circle) =====
 function hit(pipe){
 
-let r = bird.size*0.35;
+let r = bird.size*0.32;
 
 if(
 bird.x+r > pipe.x &&
@@ -198,15 +206,17 @@ bird.y += velocity;
 spawnPipe();
 
 pipes.forEach(p=>{
+
 p.x -= speed;
 
 if(!p.passed && p.x+pipeWidth < bird.x){
 score++;
 p.passed=true;
-speed += 0.05; // gradual difficulty
+speed += 0.04;
 }
 
 if(hit(p)) gameOver();
+
 });
 
 pipes = pipes.filter(p=>p.x+pipeWidth>0);
@@ -222,15 +232,16 @@ document.getElementById("over").style.display="flex";
 document.getElementById("scoreText").innerText="Score : "+score;
 }
 
-// ===== DRAW SCORE =====
+// ===== SCORE =====
 function drawScore(){
 ctx.fillStyle="black";
-ctx.font="bold 30px Arial";
+ctx.font="bold 32px Arial";
 ctx.fillText(score,20,50);
 }
 
 // ===== LOOP =====
 function loop(){
+
 ctx.clearRect(0,0,canvas.width,canvas.height);
 
 drawClouds();
@@ -255,9 +266,10 @@ document.getElementById("start").style.display="none";
 
 // ===== RESTART =====
 function restart(){
+
 pipes=[];
 score=0;
-speed=2.5;
+speed=2.4;
 bird.y=canvas.height*0.4;
 velocity=0;
 
@@ -265,7 +277,7 @@ document.getElementById("over").style.display="none";
 document.getElementById("start").style.display="flex";
 }
 
-// ===== CONTROLS =====
+// ===== KEYBOARD =====
 document.addEventListener("keydown",e=>{
 if(e.code==="Space"){
 startGame();
@@ -273,12 +285,12 @@ velocity=-8;
 }
 });
 
-// FIXED MOBILE TOUCH
-canvas.addEventListener("touchstart",function(e){
+// ⭐ UNIVERSAL TOUCH FIX ⭐
+canvas.addEventListener("pointerdown",e=>{
 e.preventDefault();
 startGame();
 velocity=-8;
-},{passive:false});
+});
 </script>
 
 </body>

@@ -44,8 +44,8 @@ let bgm = document.getElementById("bgm");
 let gameStarted = false;
 let gameOver = false;
 
-let gravity = 0.5;
-let velocity = 0;
+let gravity = 0.25;
+let velocity = -9;
 
 let score = 0;
 
@@ -73,7 +73,7 @@ for(let i=0;i<5;i++){
 // ---------- PIPES ----------
 let pipes = [];
 let pipeWidth = 90;
-let pipeGap = 220; // BIGGER GAP
+let pipeGap = 240; // BIGGER GAP
 
 function createPipe(){
     let topHeight = Math.random()*(canvas.height - pipeGap - 200) + 50;
@@ -227,4 +227,5 @@ gameLoop();
 </script>
 </body>
 </html>
+
 

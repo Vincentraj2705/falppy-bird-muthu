@@ -46,7 +46,7 @@ let gameOver = false;
 
 let isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
-let gravity = isMobile ? 0.22 : 0.25;
+let gravity = isMobile ? 0.18 : 0.25;
 let velocity = 0;
 
 let score = 0;
@@ -99,7 +99,7 @@ function flap(isMobileInput=false){
     if(!gameOver){
 
         if(isMobileInput){
-            velocity = -7; // weaker jump on phone
+            velocity = -6; // weaker jump on phone
         } else {
             velocity = -9; // stronger jump on desktop
         }
@@ -236,3 +236,4 @@ gameLoop();
 </script>
 </body>
 </html>
+

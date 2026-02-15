@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Flappy Friend</title>
+
+<!-- ✅ Prevent Mobile Zoom -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>Royal Muthu</title>
 
 <style>
 body {
@@ -10,12 +14,14 @@ body {
     overflow: hidden;
     background: skyblue;
     font-family: Arial, sans-serif;
+    touch-action: none;
 }
 
 canvas {
     position: fixed;
     top: 0;
     left: 0;
+    touch-action: none;
 }
 
 #startText {
@@ -63,7 +69,7 @@ birdImg.src = "friend.png"; // Replace with your image
 let bgm = new Audio("bgm.mp3"); // Replace with your bgm
 bgm.loop = true;
 
-// ===== BIRD (AUTO BIG FACE SCALING) =====
+// ===== BIRD =====
 let bird = {
     x: canvas.width * 0.2,
     y: canvas.height * 0.4,
@@ -193,7 +199,7 @@ function startGame() {
     }
 }
 
-// Keyboard
+// ===== KEYBOARD CONTROL =====
 document.addEventListener("keydown", e => {
     if (e.code === "Space") {
         startGame();
@@ -201,11 +207,12 @@ document.addEventListener("keydown", e => {
     }
 });
 
-// Mobile Touch
-canvas.addEventListener("touchstart", () => {
+// ===== TOUCH CONTROL WITH ZOOM BLOCK =====
+canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
     startGame();
     velocity = -10;
-});
+}, { passive: false });
 
 gameLoop();
 </script>

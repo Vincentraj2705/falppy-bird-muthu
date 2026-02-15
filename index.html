@@ -41,7 +41,7 @@ canvas {
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// ===== FULL SCREEN CANVAS =====
+// ===== FULL SCREEN =====
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -51,30 +51,30 @@ window.addEventListener("resize", resizeCanvas);
 
 // ===== GAME VARIABLES =====
 let gameStarted = false;
-let gravity = 0.5;
+let gravity = 0.6;
 let velocity = 0;
 let score = 0;
 
 // ===== LOAD FRIEND IMAGE =====
 let birdImg = new Image();
-birdImg.src = "friend.png"; // Replace with your friend image
+birdImg.src = "friend.png"; // Replace with your image
 
-// ===== LOAD BGM =====
-let bgm = new Audio("bgm.mp3"); // Replace with your music
+// ===== LOAD MUSIC =====
+let bgm = new Audio("bgm.mp3"); // Replace with your bgm
 bgm.loop = true;
 
-// ===== BIRD =====
+// ===== BIRD (AUTO BIG FACE SCALING) =====
 let bird = {
     x: canvas.width * 0.2,
     y: canvas.height * 0.4,
-    width: 70,
-    height: 70
+    width: canvas.width * 0.18,
+    height: canvas.width * 0.18
 };
 
 // ===== PIPES =====
 let pipes = [];
-let pipeWidth = 70;
-let gap = canvas.height * 0.25;
+let pipeWidth = canvas.width * 0.12;
+let gap = canvas.height * 0.32;
 
 // Create pipe
 function createPipe() {
@@ -114,15 +114,13 @@ function drawPipes() {
 // Update pipes
 function updatePipes() {
     pipes.forEach(pipe => {
-        pipe.x -= 3;
+        pipe.x -= 4;
 
-        // Score update
         if (!pipe.passed && pipe.x + pipeWidth < bird.x) {
             score++;
             pipe.passed = true;
         }
 
-        // Collision
         if (
             bird.x < pipe.x + pipeWidth &&
             bird.x + bird.width > pipe.x &&
@@ -151,7 +149,6 @@ function update() {
     velocity += gravity;
     bird.y += velocity;
 
-    // Ground / ceiling collision
     if (bird.y + bird.height > canvas.height || bird.y < 0) {
         gameOver();
     }
@@ -183,28 +180,32 @@ setInterval(() => {
     if (gameStarted) createPipe();
 }, 2000);
 
-// ===== KEYBOARD CONTROL =====
-document.addEventListener("keydown", e => {
-    if (e.code === "Space") {
-        startGame();
-        velocity = -9;
-    }
-});
-
-// ===== TOUCH CONTROL =====
-canvas.addEventListener("touchstart", () => {
-    startGame();
-    velocity = -9;
-});
-
 // Start game
 function startGame() {
     if (!gameStarted) {
         gameStarted = true;
-        bgm.play();
+
+        bgm.play().catch(() => {
+            console.log("Audio blocked until interaction");
+        });
+
         document.getElementById("startText").style.display = "none";
     }
 }
+
+// Keyboard
+document.addEventListener("keydown", e => {
+    if (e.code === "Space") {
+        startGame();
+        velocity = -10;
+    }
+});
+
+// Mobile Touch
+canvas.addEventListener("touchstart", () => {
+    startGame();
+    velocity = -10;
+});
 
 gameLoop();
 </script>

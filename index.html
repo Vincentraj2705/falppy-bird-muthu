@@ -3,14 +3,14 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
-<title>Royal Muthu</title>
+<title>Royal muthu</title>
 
 <style>
 html, body {
     margin:0;
     padding:0;
     overflow:hidden;
-    background: skyblue;
+    background: linear-gradient(#87CEEB, #cdefff);
     touch-action: manipulation;
 }
 
@@ -44,20 +44,22 @@ let bgm = document.getElementById("bgm");
 let gameStarted = false;
 let gameOver = false;
 
-let gravity = 0.25;
-let velocity = -9;
+let isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+
+let gravity = isMobile ? 0.22 : 0.25;
+let velocity = 0;
 
 let score = 0;
 
 let friend = new Image();
-friend.src = "friend.png";   // your friend's photo
+friend.src = "friend.png";
 
 // ---------- BIRD ----------
 let bird = {
     x: 80,
     y: 200,
-    width: 60,
-    height: 60
+    width: 70,
+    height: 70
 };
 
 // ---------- CLOUDS ----------
@@ -67,13 +69,13 @@ for(let i=0;i<5;i++){
         x: Math.random()*canvas.width,
         y: Math.random()*250,
         size: 120 + Math.random()*80
-        });
+    });
 }
 
 // ---------- PIPES ----------
 let pipes = [];
 let pipeWidth = 90;
-let pipeGap = 240; // BIGGER GAP
+let pipeGap = 240;
 
 function createPipe(){
     let topHeight = Math.random()*(canvas.height - pipeGap - 200) + 50;
@@ -86,37 +88,45 @@ function createPipe(){
     });
 }
 
-// ---------- INPUT ----------
-function flap(){
+// ---------- FLAP ----------
+function flap(isMobileInput=false){
+
     if(!gameStarted){
         gameStarted = true;
         bgm.play().catch(()=>{});
     }
 
     if(!gameOver){
-        velocity = -9;
+
+        if(isMobileInput){
+            velocity = -7; // weaker jump on phone
+        } else {
+            velocity = -9; // stronger jump on desktop
+        }
+
     } else {
         location.reload();
     }
 }
 
+// keyboard
 document.addEventListener("keydown", e=>{
-    if(e.code === "Space") flap();
+    if(e.code === "Space") flap(false);
 });
 
+// touch
 canvas.addEventListener("touchstart", e=>{
     e.preventDefault();
-    flap();
+    flap(true);
 });
 
-// ---------- DRAW CLOUDS ----------
+// ---------- CLOUD DRAW ----------
 function drawClouds(){
 
     ctx.fillStyle="white";
 
     clouds.forEach(cloud=>{
 
-        // main cloud body
         ctx.beginPath();
         ctx.arc(cloud.x, cloud.y, cloud.size/2, 0, Math.PI*2);
         ctx.arc(cloud.x + cloud.size/2, cloud.y + 10, cloud.size/2.5, 0, Math.PI*2);
@@ -124,32 +134,29 @@ function drawClouds(){
         ctx.arc(cloud.x, cloud.y + 20, cloud.size/2.2, 0, Math.PI*2);
         ctx.fill();
 
-        // movement
-        cloud.x -= 0.6;
+        cloud.x -= 0.5;
 
         if(cloud.x + cloud.size < 0){
             cloud.x = canvas.width + 100;
-            cloud.y = Math.random() * 200;
+            cloud.y = Math.random()*250;
         }
-
     });
 }
 
-
-// ---------- DRAW PIPES ----------
+// ---------- PIPE DRAW ----------
 function drawPipes(){
 
-    ctx.fillStyle = "#2ecc71";
-    ctx.strokeStyle = "#27ae60";
-    ctx.lineWidth = 6;
+    ctx.fillStyle="#2ecc71";
+    ctx.strokeStyle="#27ae60";
+    ctx.lineWidth=6;
 
     pipes.forEach(pipe=>{
 
-        // top pipe
+        // top
         ctx.fillRect(pipe.x, 0, pipeWidth, pipe.top);
         ctx.strokeRect(pipe.x, 0, pipeWidth, pipe.top);
 
-        // bottom pipe
+        // bottom
         ctx.fillRect(pipe.x, pipe.bottom, pipeWidth, canvas.height - pipe.bottom);
         ctx.strokeRect(pipe.x, pipe.bottom, pipeWidth, canvas.height - pipe.bottom);
 
@@ -172,8 +179,7 @@ function drawPipes(){
         }
     });
 
-    // remove old pipes
-    pipes = pipes.filter(p=>p.x + pipeWidth > 0);
+    pipes = pipes.filter(p => p.x + pipeWidth > 0);
 }
 
 // ---------- GAME LOOP ----------
@@ -198,7 +204,6 @@ function gameLoop(){
 
     drawPipes();
 
-    // draw bird
     ctx.drawImage(friend, bird.x, bird.y, bird.width, bird.height);
 
     // ground collision
@@ -211,12 +216,16 @@ function gameLoop(){
     ctx.font="40px Arial";
     ctx.fillText(score, canvas.width/2, 70);
 
+    // start text
     if(!gameStarted){
+        ctx.font="30px Arial";
         ctx.fillText("Tap or Press Space", canvas.width/2 - 150, canvas.height/2);
     }
 
+    // game over
     if(gameOver){
-        ctx.fillText("Game Over - Tap to Restart", canvas.width/2 - 220, canvas.height/2);
+        ctx.font="30px Arial";
+        ctx.fillText("Game Over - Tap to Restart", canvas.width/2 - 180, canvas.height/2);
     }
 
     requestAnimationFrame(gameLoop);
@@ -227,5 +236,3 @@ gameLoop();
 </script>
 </body>
 </html>
-
-

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Flappy Friend</title>
+
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    background: skyblue;
+    font-family: Arial, sans-serif;
+}
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+#startText {
+    position: fixed;
+    width: 100%;
+    text-align: center;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 28px;
+    color: white;
+    font-weight: bold;
+    z-index: 10;
+}
+</style>
+</head>
+
+<body>
+
+<div id="startText">Tap / Press SPACE to Start</div>
+<canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+// ===== FULL SCREEN CANVAS =====
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+// ===== GAME VARIABLES =====
+let gameStarted = false;
+let gravity = 0.5;
+let velocity = 0;
+let score = 0;
+
+// ===== LOAD FRIEND IMAGE =====
+let birdImg = new Image();
+birdImg.src = "friend.png"; // Replace with your friend image
+
+// ===== LOAD BGM =====
+let bgm = new Audio("bgm.mp3"); // Replace with your music
+bgm.loop = true;
+
+// ===== BIRD =====
+let bird = {
+    x: canvas.width * 0.2,
+    y: canvas.height * 0.4,
+    width: 70,
+    height: 70
+};
+
+// ===== PIPES =====
+let pipes = [];
+let pipeWidth = 70;
+let gap = canvas.height * 0.25;
+
+// Create pipe
+function createPipe() {
+    let topHeight = Math.random() * (canvas.height * 0.5) + 50;
+
+    pipes.push({
+        x: canvas.width,
+        top: topHeight,
+        bottom: topHeight + gap,
+        passed: false
+    });
+}
+
+// Reset game
+function resetGame() {
+    bird.y = canvas.height * 0.4;
+    velocity = 0;
+    pipes = [];
+    score = 0;
+}
+
+// Draw bird
+function drawBird() {
+    ctx.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
+}
+
+// Draw pipes
+function drawPipes() {
+    ctx.fillStyle = "green";
+
+    pipes.forEach(pipe => {
+        ctx.fillRect(pipe.x, 0, pipeWidth, pipe.top);
+        ctx.fillRect(pipe.x, pipe.bottom, pipeWidth, canvas.height);
+    });
+}
+
+// Update pipes
+function updatePipes() {
+    pipes.forEach(pipe => {
+        pipe.x -= 3;
+
+        // Score update
+        if (!pipe.passed && pipe.x + pipeWidth < bird.x) {
+            score++;
+            pipe.passed = true;
+        }
+
+        // Collision
+        if (
+            bird.x < pipe.x + pipeWidth &&
+            bird.x + bird.width > pipe.x &&
+            (bird.y < pipe.top || bird.y + bird.height > pipe.bottom)
+        ) {
+            gameOver();
+        }
+    });
+
+    pipes = pipes.filter(pipe => pipe.x + pipeWidth > 0);
+}
+
+// Game Over
+function gameOver() {
+    bgm.pause();
+    alert("Game Over! Score: " + score);
+    resetGame();
+    gameStarted = false;
+    document.getElementById("startText").style.display = "block";
+}
+
+// Update physics
+function update() {
+    if (!gameStarted) return;
+
+    velocity += gravity;
+    bird.y += velocity;
+
+    // Ground / ceiling collision
+    if (bird.y + bird.height > canvas.height || bird.y < 0) {
+        gameOver();
+    }
+
+    updatePipes();
+}
+
+// Draw score
+function drawScore() {
+    ctx.fillStyle = "black";
+    ctx.font = "30px Arial";
+    ctx.fillText("Score: " + score, 20, 40);
+}
+
+// Game loop
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawBird();
+    drawPipes();
+    drawScore();
+    update();
+
+    requestAnimationFrame(gameLoop);
+}
+
+// Pipe spawn
+setInterval(() => {
+    if (gameStarted) createPipe();
+}, 2000);
+
+// ===== KEYBOARD CONTROL =====
+document.addEventListener("keydown", e => {
+    if (e.code === "Space") {
+        startGame();
+        velocity = -9;
+    }
+});
+
+// ===== TOUCH CONTROL =====
+canvas.addEventListener("touchstart", () => {
+    startGame();
+    velocity = -9;
+});
+
+// Start game
+function startGame() {
+    if (!gameStarted) {
+        gameStarted = true;
+        bgm.play();
+        document.getElementById("startText").style.display = "none";
+    }
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>

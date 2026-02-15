@@ -2,219 +2,296 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-
-<!-- ✅ Prevent Mobile Zoom -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 <title>Royal Muthu</title>
 
 <style>
-body {
-    margin: 0;
-    overflow: hidden;
-    background: skyblue;
-    font-family: Arial, sans-serif;
-    touch-action: none;
+body{
+margin:0;
+overflow:hidden;
+background:skyblue;
+touch-action:none;
+font-family:Arial;
 }
 
-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    touch-action: none;
+canvas{
+position:fixed;
+top:0;
+left:0;
 }
 
-#startText {
-    position: fixed;
-    width: 100%;
-    text-align: center;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 28px;
-    color: white;
-    font-weight: bold;
-    z-index: 10;
+#startScreen,#gameOverScreen{
+position:fixed;
+width:100%;
+height:100%;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+color:white;
+background:rgba(0,0,0,0.3);
+font-size:30px;
+z-index:10;
+}
+
+button{
+padding:12px 25px;
+font-size:18px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+margin-top:15px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="startText">Tap / Press SPACE to Start</div>
+<div id="startScreen">
+Tap / Press Space To Start
+</div>
+
+<div id="gameOverScreen" style="display:none">
+Game Over
+<div id="finalScore"></div>
+<button onclick="restartGame()">Restart</button>
+</div>
+
 <canvas id="gameCanvas"></canvas>
 
 <script>
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// ===== FULL SCREEN =====
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+function resize(){
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 }
-resizeCanvas();
-window.addEventListener("resize", resizeCanvas);
+resize();
+window.addEventListener("resize",resize);
 
 // ===== GAME VARIABLES =====
-let gameStarted = false;
-let gravity = 0.6;
+let gravity = 0.45;
 let velocity = 0;
+let gameStarted = false;
+let gameSpeed = 2.5;
 let score = 0;
 
-// ===== LOAD FRIEND IMAGE =====
+// ===== IMAGE =====
 let birdImg = new Image();
-birdImg.src = "friend.png"; // Replace with your image
+birdImg.src = "friend.png";
 
-// ===== LOAD MUSIC =====
-let bgm = new Audio("bgm.mp3"); // Replace with your bgm
+// ===== AUDIO =====
+let bgm = new Audio("bgm.mp3");
 bgm.loop = true;
 
 // ===== BIRD =====
 let bird = {
-    x: canvas.width * 0.2,
-    y: canvas.height * 0.4,
-    width: canvas.width * 0.18,
-    height: canvas.width * 0.18
+x: canvas.width*0.2,
+y: canvas.height*0.4,
+size: canvas.width*0.16,
+rotation:0
 };
 
+// ===== CLOUDS =====
+let clouds = [];
+
+for(let i=0;i<5;i++){
+clouds.push({
+x:Math.random()*canvas.width,
+y:Math.random()*canvas.height*0.5,
+size:80+Math.random()*80,
+speed:0.3+Math.random()*0.5
+});
+}
+
 // ===== PIPES =====
-let pipes = [];
-let pipeWidth = canvas.width * 0.12;
-let gap = canvas.height * 0.32;
+let pipes=[];
+let gap = canvas.height*0.30;
+let pipeWidth = canvas.width*0.12;
 
-// Create pipe
-function createPipe() {
-    let topHeight = Math.random() * (canvas.height * 0.5) + 50;
+function createPipe(){
+let top = Math.random()*(canvas.height*0.45)+60;
 
-    pipes.push({
-        x: canvas.width,
-        top: topHeight,
-        bottom: topHeight + gap,
-        passed: false
-    });
+pipes.push({
+x:canvas.width,
+top:top,
+bottom:top+gap,
+passed:false
+});
 }
 
-// Reset game
-function resetGame() {
-    bird.y = canvas.height * 0.4;
-    velocity = 0;
-    pipes = [];
-    score = 0;
+// ===== DRAW CLOUDS =====
+function drawClouds(){
+ctx.fillStyle="white";
+
+clouds.forEach(c=>{
+ctx.beginPath();
+ctx.arc(c.x,c.y,c.size*0.5,0,Math.PI*2);
+ctx.arc(c.x+40,c.y+10,c.size*0.4,0,Math.PI*2);
+ctx.arc(c.x-40,c.y+10,c.size*0.4,0,Math.PI*2);
+ctx.fill();
+
+c.x -= c.speed;
+if(c.x<-100) c.x = canvas.width+100;
+});
 }
 
-// Draw bird
-function drawBird() {
-    ctx.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
+// ===== DRAW BIRD WITH ROTATION =====
+function drawBird(){
+ctx.save();
+ctx.translate(bird.x,bird.y);
+ctx.rotate(bird.rotation);
+ctx.drawImage(birdImg,-bird.size/2,-bird.size/2,bird.size,bird.size);
+ctx.restore();
 }
 
-// Draw pipes
-function drawPipes() {
-    ctx.fillStyle = "green";
+// ===== DRAW REALISTIC PIPES =====
+function drawPipes(){
 
-    pipes.forEach(pipe => {
-        ctx.fillRect(pipe.x, 0, pipeWidth, pipe.top);
-        ctx.fillRect(pipe.x, pipe.bottom, pipeWidth, canvas.height);
-    });
+pipes.forEach(p=>{
+
+let grad = ctx.createLinearGradient(p.x,0,p.x+pipeWidth,0);
+grad.addColorStop(0,"#2ecc71");
+grad.addColorStop(1,"#27ae60");
+
+ctx.fillStyle=grad;
+
+// Top pipe
+ctx.fillRect(p.x,0,pipeWidth,p.top);
+
+// Cap
+ctx.fillRect(p.x-5,p.top-25,pipeWidth+10,25);
+
+// Bottom pipe
+ctx.fillRect(p.x,p.bottom,pipeWidth,canvas.height);
+
+// Cap
+ctx.fillRect(p.x-5,p.bottom,pipeWidth+10,25);
+
+});
 }
 
-// Update pipes
-function updatePipes() {
-    pipes.forEach(pipe => {
-        pipe.x -= 4;
+// ===== CIRCULAR COLLISION =====
+function checkCollision(pipe){
 
-        if (!pipe.passed && pipe.x + pipeWidth < bird.x) {
-            score++;
-            pipe.passed = true;
-        }
+let radius = bird.size*0.35;
+let bx = bird.x;
+let by = bird.y;
 
-        if (
-            bird.x < pipe.x + pipeWidth &&
-            bird.x + bird.width > pipe.x &&
-            (bird.y < pipe.top || bird.y + bird.height > pipe.bottom)
-        ) {
-            gameOver();
-        }
-    });
-
-    pipes = pipes.filter(pipe => pipe.x + pipeWidth > 0);
+if(
+bx+radius > pipe.x &&
+bx-radius < pipe.x+pipeWidth &&
+(by-radius < pipe.top || by+radius > pipe.bottom)
+){
+return true;
+}
+return false;
 }
 
-// Game Over
-function gameOver() {
-    bgm.pause();
-    alert("Game Over! Score: " + score);
-    resetGame();
-    gameStarted = false;
-    document.getElementById("startText").style.display = "block";
+// ===== UPDATE PIPES =====
+function updatePipes(){
+
+pipes.forEach(p=>{
+p.x -= gameSpeed;
+
+if(!p.passed && p.x+pipeWidth < bird.x){
+score++;
+p.passed=true;
+
+// increase difficulty slowly
+gameSpeed += 0.05;
 }
 
-// Update physics
-function update() {
-    if (!gameStarted) return;
-
-    velocity += gravity;
-    bird.y += velocity;
-
-    if (bird.y + bird.height > canvas.height || bird.y < 0) {
-        gameOver();
-    }
-
-    updatePipes();
-}
-
-// Draw score
-function drawScore() {
-    ctx.fillStyle = "black";
-    ctx.font = "30px Arial";
-    ctx.fillText("Score: " + score, 20, 40);
-}
-
-// Game loop
-function gameLoop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    drawBird();
-    drawPipes();
-    drawScore();
-    update();
-
-    requestAnimationFrame(gameLoop);
-}
-
-// Pipe spawn
-setInterval(() => {
-    if (gameStarted) createPipe();
-}, 2000);
-
-// Start game
-function startGame() {
-    if (!gameStarted) {
-        gameStarted = true;
-
-        bgm.play().catch(() => {
-            console.log("Audio blocked until interaction");
-        });
-
-        document.getElementById("startText").style.display = "none";
-    }
-}
-
-// ===== KEYBOARD CONTROL =====
-document.addEventListener("keydown", e => {
-    if (e.code === "Space") {
-        startGame();
-        velocity = -10;
-    }
+if(checkCollision(p)) gameOver();
 });
 
-// ===== TOUCH CONTROL WITH ZOOM BLOCK =====
-canvas.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    startGame();
-    velocity = -10;
-}, { passive: false });
+pipes = pipes.filter(p=>p.x+pipeWidth>0);
+}
 
-gameLoop();
+// ===== GAME OVER =====
+function gameOver(){
+gameStarted=false;
+bgm.pause();
+
+document.getElementById("gameOverScreen").style.display="flex";
+document.getElementById("finalScore").innerText="Score : "+score;
+}
+
+// ===== UPDATE =====
+function update(){
+if(!gameStarted) return;
+
+velocity += gravity;
+bird.y += velocity;
+
+// rotation animation
+bird.rotation = velocity*0.05;
+
+if(bird.y > canvas.height || bird.y < 0) gameOver();
+
+updatePipes();
+}
+
+// ===== DRAW SCORE =====
+function drawScore(){
+ctx.fillStyle="black";
+ctx.font="bold 30px Arial";
+ctx.fillText(score,20,50);
+}
+
+// ===== GAME LOOP =====
+function loop(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+drawClouds();
+drawPipes();
+drawBird();
+drawScore();
+update();
+
+requestAnimationFrame(loop);
+}
+loop();
+
+// ===== PIPE SPAWN =====
+setInterval(()=>{
+if(gameStarted) createPipe();
+},1800);
+
+// ===== START GAME =====
+function startGame(){
+if(!gameStarted){
+gameStarted=true;
+velocity=-8;
+bgm.play().catch(()=>{});
+document.getElementById("startScreen").style.display="none";
+}
+}
+
+// ===== RESTART =====
+function restartGame(){
+pipes=[];
+score=0;
+gameSpeed=2.5;
+bird.y=canvas.height*0.4;
+velocity=0;
+
+document.getElementById("gameOverScreen").style.display="none";
+document.getElementById("startScreen").style.display="flex";
+}
+
+// ===== CONTROLS =====
+document.addEventListener("keydown",e=>{
+if(e.code==="Space") startGame(), velocity=-8;
+});
+
+canvas.addEventListener("touchstart",(e)=>{
+e.preventDefault();
+startGame();
+velocity=-8;
+},{passive:false});
 </script>
 
 </body>

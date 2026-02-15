@@ -65,9 +65,9 @@ let clouds = [];
 for(let i=0;i<5;i++){
     clouds.push({
         x: Math.random()*canvas.width,
-        y: Math.random()*200,
-        size: 60 + Math.random()*50
-    });
+        y: Math.random()*250,
+        size: 120 + Math.random()*80
+        });
 }
 
 // ---------- PIPES ----------
@@ -111,19 +111,30 @@ canvas.addEventListener("touchstart", e=>{
 
 // ---------- DRAW CLOUDS ----------
 function drawClouds(){
+
     ctx.fillStyle="white";
 
     clouds.forEach(cloud=>{
+
+        // main cloud body
         ctx.beginPath();
         ctx.arc(cloud.x, cloud.y, cloud.size/2, 0, Math.PI*2);
+        ctx.arc(cloud.x + cloud.size/2, cloud.y + 10, cloud.size/2.5, 0, Math.PI*2);
+        ctx.arc(cloud.x - cloud.size/2, cloud.y + 10, cloud.size/2.5, 0, Math.PI*2);
+        ctx.arc(cloud.x, cloud.y + 20, cloud.size/2.2, 0, Math.PI*2);
         ctx.fill();
 
-        cloud.x -= 0.5;
+        // movement
+        cloud.x -= 0.6;
+
         if(cloud.x + cloud.size < 0){
-            cloud.x = canvas.width;
+            cloud.x = canvas.width + 100;
+            cloud.y = Math.random() * 200;
         }
+
     });
 }
+
 
 // ---------- DRAW PIPES ----------
 function drawPipes(){
@@ -142,7 +153,7 @@ function drawPipes(){
         ctx.fillRect(pipe.x, pipe.bottom, pipeWidth, canvas.height - pipe.bottom);
         ctx.strokeRect(pipe.x, pipe.bottom, pipeWidth, canvas.height - pipe.bottom);
 
-        pipe.x -= 3;
+        pipe.x -= 2;
 
         // scoring
         if(!pipe.passed && pipe.x + pipeWidth < bird.x){
@@ -180,7 +191,7 @@ function gameLoop(){
         bird.y += velocity;
 
         frame++;
-        if(frame % 110 === 0){
+        if(frame % 140 === 0){
             createPipe();
         }
     }
@@ -216,3 +227,4 @@ gameLoop();
 </script>
 </body>
 </html>
+
